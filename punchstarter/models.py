@@ -4,8 +4,8 @@ class Member(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100))
     last_name = db.Column(db.String(100))
-    project = db.relationship('Project', backref='creator')
-    pledges = db.relationship('Pledge', backref='pledgor', foreign_keys='Pledge.member_id')
+    project = db.relationship('Project', backref='creator') # Called creator because a project's member is called a creator
+    pledges = db.relationship('Pledge', backref='pledgor', foreign_keys='Pledge.member_id') # Have to specify the foreign key because there are multiple in Pledge
     
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)

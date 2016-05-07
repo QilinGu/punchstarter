@@ -1,9 +1,10 @@
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from flask import Flask, render_template
+from flask import Flask, render_template, request, url_for, redirect
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager, Server
+import datetime
 
 app = Flask(__name__)
 app.config.from_object('punchstarter.default_settings')
@@ -25,5 +26,32 @@ manager.add_command("runserver", Server(
 )
 
 @app.route("/")
-def hello():
+def index():
     return render_template("index.html")
+    
+@app.route("/projects/create/", methods=["GET", "POST"])
+def create():
+    if request.method == "GET":
+        return render_template("create.html")
+    elif request.method == "POST":
+        # Handle the form submission
+        
+        now = datetime.datetime.now()
+        time_end = request.form.get("funding_end_date")
+        time_end = datetime.datetime.strptime(time_end, "%m/%d/%Y")
+        
+        new_project = Project(
+            member_id = 1, # Guest Creator
+            name = request.form.get("project_name"),
+            short_description = request.form.get("short_description"),
+            long_description = request.form.get("long_description"),
+            goal_amount = request.form.get("funding_goal"),
+            time_start = now,
+            time_end = time_end,
+            time_created = now
+        )
+        
+        db.session.add(new_project)
+        db.session.commit()
+        
+        return redirect(url_for("create"))
