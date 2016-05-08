@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+    {% set active_page = "create" %}
+    
+    {% block subtitle %}
+        Create a Project
+    {% endblock %}
+    
+    {% block content %}
+    
+        <div class="panel">
+            <h1 class="text-center">Browsing {{ project_count }} search results for {{query_text}}.</h1>
+        </div>
+        
+        {% include '_projects.html' %}
+        
+    {% endblock content %}
