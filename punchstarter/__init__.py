@@ -54,7 +54,7 @@ def create():
         db.session.add(new_project)
         db.session.commit()
         
-        return redirect(url_for("create"))
+        return redirect(url_for("project_detail", project_id=new_project.id))
 
 @app.route("/projects/<int:project_id>/")
 def project_detail(project_id):
@@ -63,3 +63,29 @@ def project_detail(project_id):
         abort(404)
     
     return render_template("project_detail.html", project=project)
+    
+@app.route("/projects/<int:project_id>/pledge/", methods=["GET", "POST"])
+def pledge(project_id):
+    project = db.session.query(Project).get(project_id)
+    if project is None:
+        abort(404)
+    if request.method == "GET":
+        return render_template("pledge.html", project=project)
+    elif request.method == "POST":
+        # Handle the form submission
+        
+        # Hardcode guest_pledgor for now
+        guest_pledgor = db.session.query(Member).filter_by(id=2).one()
+        
+        new_pledge = Pledge (
+            amount = request.form.get("amount"),
+            time_created = datetime.datetime.now(),
+            member_id = guest_pledgor.id,
+            project_id = project.id
+        )
+        
+        db.session.add(new_pledge)
+        db.session.commit()
+        
+        return redirect(url_for("project_detail", project_id=project.id))
+        

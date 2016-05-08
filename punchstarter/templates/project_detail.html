@@ -2,14 +2,14 @@
 {% set active_page = "project_detail" %}
 
 {% block subtitle %}
-    {{ project.project_name}}
+    {{ project.name}}
 {% endblock %}
 
 {% block content %}
 
     <div class="row">
         <div class="col-sm-12">
-            <h1 class="text-center">{{ project.project_name }} </h1>
+            <h1 class="text-center">{{ project.name }} </h1>
             <div class="text-center">by {{ project.creator.first_name }} {{ project.creator.last_name }}</div>
         </div>
     </div>
@@ -35,7 +35,7 @@
             </div>
             
             <div class="panel">
-                <span class="project-vitals">${{ project.total_pledges }}</span> <br/> pledges of ${{ project.goal_amount}}
+                <span class="project-vitals">${{ project.total_pledges }}</span> <br/> pledged of ${{ project.goal_amount}}
             </div>
             
             <div class="panel">
@@ -43,7 +43,7 @@
             </div>
             
             <div class="panel">
-                <a href="#" class="btn btn-punchstarter">Pledge Now</a>
+                <a href="{{ url_for('pledge', project_id=project.id) }}" class="btn btn-punchstarter">Pledge Now</a>
             </div>
             
         </div>
