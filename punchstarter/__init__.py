@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from flask import Flask, render_template, request, url_for, redirect
+from flask import Flask, render_template, request, url_for, redirect, abort
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager, Server
@@ -55,3 +55,11 @@ def create():
         db.session.commit()
         
         return redirect(url_for("create"))
+
+@app.route("/projects/<int:project_id>/")
+def project_detail(project_id):
+    project = db.session.query(Project).get(project_id)
+    if project is None:
+        abort(404)
+    
+    return render_template("project_detail.html", project=project)
