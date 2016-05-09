@@ -1,2 +1,10 @@
+*~
 *.pyc
-punchstarter/app.db
+*.swp
+*#
+.metadata
+.DS_Store
+*.log
+__pycache__
+venv
+error.log
