@@ -4,19 +4,27 @@ from flask import Flask, render_template, request, url_for, redirect, abort
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager, Server
+from flask.ext.security import Security, SQLAlchemyUserDatastore
 import datetime
 import cloudinary.uploader
 
 app = Flask(__name__)
 app.config.from_object('punchstarter.default_settings')
-manager = Manager(app)
 
+# Enable database
 db = SQLAlchemy(app)
 migrate = Migrate(app,db)
+manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 
 # Has to be here, not at the top
+# Has to be before Flask-Security
 from punchstarter.models import *
+
+# Setup Flask-Security
+from forms import ExtendedRegisterForm
+user_datastore = SQLAlchemyUserDatastore(db, Member, Role)
+security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 
 manager.add_command("runserver", Server(
     use_debugger = True,
