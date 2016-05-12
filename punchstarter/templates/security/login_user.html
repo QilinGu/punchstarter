@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% set active_page = "login" %}
+
+{% block subtitle %}
+    Log In
+{% endblock %}
+
+{% block content %}
+    <div>
+        <h1 class="text-center">Login</h1>
+    </div>
+    
+    {% if login_user_form.errors %}
+        <ul class="bg-danger list-unstyled">
+            {% for field, errors in login_user_form.errors.items() %}
+                <li><strong>{{ field }}</strong>: {{ errors.0 }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    <form class="form-horizontal" method="POST" action="{{ url_for_security('login') }}" name="login_user_form">
+        {{ login_user_form.hidden_tag() }}
+        
+        <div class="form-group">
+            <label for="email" class="col-sm-2 control-label">Email</label>
+            <div class="col-sm-10">
+                <input type="email" class="form-control" id="email" name="email">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="password" class="col-sm-2 control-label">Password</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="password" name="password">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="remember" class="col-sm-2 control-label">Remember Me</label>
+            <div class="col-sm-10">
+                <input type="checkbox" id="remember" name="remember" value="y">
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button type="submit" class="btn btn-punchstarter">Submit</button>
+            </div>
+        </div>
+    </form>
+
+{% endblock content%}

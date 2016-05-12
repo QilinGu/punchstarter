@@ -37,11 +37,12 @@ class Project(db.Model):
     time_start = db.Column(db.DateTime)
     time_end = db.Column(db.DateTime)
     time_created = db.Column(db.DateTime)
-    pledges = db.relationship('Pledge', backref='project', foreign_keys='Pledge.project_id')
+    pledges = db.relationship('Pledge', backref='project', lazy='dynamic', foreign_keys='Pledge.project_id')
+    rewards = db.relationship('Reward', backref='project', lazy='dynamic', foreign_keys='Reward.project_id')
     
     @property
     def num_pledges(self):
-        return len(self.pledges)
+        return self.pledges.count()
         
     @property
     def total_pledges(self):
@@ -72,3 +73,16 @@ class Pledge(db.Model):
     time_created = db.Column(db.DateTime)
     member_id = db.Column(db.Integer, db.ForeignKey('member.id'), nullable=False)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    reward_id = db.Column(db.Integer, db.ForeignKey('reward.id'), nullable=True)
+
+class Reward(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'), nullable=False)
+    title = db.Column(db.String(64), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    minimum_pledge_amount = db.Column(db.Integer, nullable=False)
+    pledges = db.relationship('Pledge', backref='pledge', lazy='dynamic', foreign_keys='Pledge.reward_id')
+    
+    @property
+    def num_pledges(self):
+        return self.pledges.count()

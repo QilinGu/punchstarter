@@ -46,6 +46,19 @@
                 <a href="{{ url_for('pledge', project_id=project.id) }}" class="btn btn-punchstarter">Pledge Now</a>
             </div>
             
+            <div class="panel">
+                <h3> Pledge Rewards </h3>
+            </div>
+            
+            {% for reward in project.rewards %}
+                <div class="panel reward-card">
+                    <p class="text-uppercase"><strong> {{ reward.title }} </strong></p>
+                    <p><span class="project-vitals"> $ {{ reward.minimum_pledge_amount }} </span> or more</p>
+                    <p><span class="project-vitals"> $ {{ reward.num_pledges }} </span> pledges so far </p>
+                    <p> {{ reward.description }} </p>
+                </div>
+            {% endfor %}
+            
         </div>
         
     </div>

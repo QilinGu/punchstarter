@@ -4,7 +4,8 @@ from flask import Flask, render_template, request, url_for, redirect, abort
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager, Server
-from flask.ext.security import Security, SQLAlchemyUserDatastore
+from flask.ext.security import Security, SQLAlchemyUserDatastore, login_required, current_user
+from flask_mail import Mail
 import datetime
 import cloudinary.uploader
 
@@ -26,6 +27,8 @@ from forms import ExtendedRegisterForm
 user_datastore = SQLAlchemyUserDatastore(db, Member, Role)
 security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 
+mail = Mail(app)
+
 manager.add_command("runserver", Server(
     use_debugger = True,
     use_reloader = True,
@@ -40,6 +43,7 @@ def index():
     return render_template("index.html", projects=projects)
     
 @app.route("/projects/create/", methods=["GET", "POST"])
+@login_required
 def create():
     if request.method == "GET":
         return render_template("create.html")
@@ -62,7 +66,7 @@ def create():
         image_filename = uploaded_image["public_id"]
         
         new_project = Project(
-            member_id = 1, # Guest Creator
+            member_id = current_user.id,
             name = request.form.get("project_name"),
             short_description = request.form.get("short_description"),
             long_description = request.form.get("long_description"),
@@ -76,7 +80,7 @@ def create():
         db.session.add(new_project)
         db.session.commit()
         
-        return redirect(url_for("project_detail", project_id=new_project.id))
+        return redirect(url_for("create_rewards", project_id=new_project.id))
 
 @app.route("/projects/<int:project_id>/")
 def project_detail(project_id):
@@ -85,6 +89,37 @@ def project_detail(project_id):
         abort(404)
     
     return render_template("project_detail.html", project=project)
+
+@app.route("/projects/<int:project_id>/rewards/", methods=["GET", "POST"])
+@login_required
+def create_rewards(project_id):
+    project_query = db.session.query(Project).filter(Project.member_id == current_user.id, Project.id == project_id)
+    if project_query.count() == 0:
+        abort(404)
+    
+    project = project_query.one()
+    
+    if request.method == "GET":
+        return render_template('create_rewards.html', project=project)
+    elif request.method == "POST":
+        titles = request.form.getlist('title[]')
+        min_pledges = request.form.getlist('min_pledge[]')
+        descriptions = request.form.getlist('description[]')
+        
+        for i in range(5):
+            if titles[i] and descriptions[i] and min_pledges[i]:
+                new_reward = Reward(
+                    project_id = project.id,
+                    title = titles[i],
+                    description = descriptions[i],
+                    minimum_pledge_amount = int(min_pledges[i])
+                )
+        
+            db.session.add(new_reward)
+        
+        db.session.commit()
+        
+        return redirect(url_for('project_detail', project_id=project.id))
     
 @app.route("/projects/<int:project_id>/pledge/", methods=["GET", "POST"])
 def pledge(project_id):
@@ -96,13 +131,10 @@ def pledge(project_id):
     elif request.method == "POST":
         # Handle the form submission
         
-        # Hardcode guest_pledgor for now
-        guest_pledgor = db.session.query(Member).filter_by(id=2).one()
-        
         new_pledge = Pledge (
             amount = request.form.get("amount"),
             time_created = datetime.datetime.now(),
-            member_id = guest_pledgor.id,
+            member_id = current_user.id,
             project_id = project.id
         )
         
