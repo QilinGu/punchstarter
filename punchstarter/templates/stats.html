@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% set active_page = "stats" %}
+
+{% block subtitle %}
+    {{ project.name}}
+{% endblock %}
+
+{% block head_javascript %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+    google.charts.load('current', {packages: ['corechart', 'line']});
+    google.charts.setOnLoadCallback(numPledges);
+    google.charts.setOnLoadCallback(amountPledges);
+
+    function numPledges() {
+    
+          var data = new google.visualization.DataTable();
+          data.addColumn('number', 'Day #');
+          data.addColumn('number', 'Number of Pledges');
+    
+          data.addRows(
+	      	{{ project.get_num_pledges_datapoints() }}
+	      );
+    
+          var options = {
+            title: "Pledges per Day",
+            hAxis: {
+              title: 'Day #',
+              minValue: 1,
+              maxValue: {{ project.duration + 1 }}
+            },
+            vAxis: {
+              title: 'Number of Pledges',
+              minValue: 0
+            },
+            height: 400
+          };
+    
+          var chart = new google.visualization.LineChart(document.getElementById('num_pledges_div'));
+    
+          chart.draw(data, options);
+        }
+        
+        function amountPledges() {
+    
+          var data = new google.visualization.DataTable();
+          data.addColumn('number', 'Day #');
+          data.addColumn('number', 'Amount Pledged');
+    
+          data.addRows(
+	      	{{ project.get_amount_pledged_datapoints() }}
+	      );
+    
+          var options = {
+            title: "Amount Pledged per Day",
+            hAxis: {
+              title: 'Day #',
+              minValue: 1,
+              maxValue: {{ project.duration + 1 }}
+            },
+            vAxis: {
+              title: 'Amount Pledged',
+              minValue: 0
+            },
+            height: 400
+          };
+    
+          var chart = new google.visualization.LineChart(document.getElementById('amount_pledged_div'));
+    
+          chart.draw(data, options);
+        }
+</script>
+{% endblock head_javascript %}
+
+{% block content %}
+
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="panel">
+                <h1 class="text-center">Stats for "<a href="{{ url_for('project_detail', project_id=project.id) }}">{{ project.name }}</a>"</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="row text-center">
+        <div class="col-sm-4">
+            <span class="project-vitals-stats">{{ project.num_pledges }}</span> <br/> pledges
+        </div>
+        
+        <div class="col-sm-4">
+            <span class="project-vitals-stats">{{ project.total_pledges }}</span> <br/> pledged
+        </div>
+        
+        <div class="col-sm-4">
+            <span class="project-vitals-stats">{{ project.percentage_funded }} % </span> <br/> funded
+        </div>
+    </div>
+
+    <hr>
+    
+    <div id="num_pledges_div"></div>
+    <div id="amount_pledged_div"></div>
+
+{% endblock content%}

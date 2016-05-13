@@ -33,6 +33,10 @@ body {
     color: #FFF
 }
 
+.project-vitals-stats {
+    font-size: 4em;
+}
+
 /* Bootstrap Overrides */
 .navbar-default .navbar-brand {
     color: #2bde73;

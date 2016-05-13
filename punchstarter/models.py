@@ -66,6 +66,52 @@ class Project(db.Model):
     @property
     def image_path(self):
         return cloudinary.utils.cloudinary_url(self.image_filename)[0]
+        
+    @property
+    def duration(self):
+        return (self.time_end - self.time_start).days
+        
+    def get_num_pledges_datapoints(self):
+        pledges_per_day = db.session.query(
+            func.date(Pledge.time_created),
+            func.count(Pledge.time_created)
+        ).filter(
+            Project.id==self.id,
+            Project.id==Pledge.project_id
+        ).group_by(
+            func.date(Pledge.time_created)
+        ).all()
+        
+        datapoints = [[i+1,0] for i in range(self.duration + 2)] # [(0,0), (1,0), ..., (30,0)]
+        for p in pledges_per_day:
+            time_pledged = datetime.datetime.strptime(p[0], "%Y-%m-%d")
+            day_num = (time_pledged.date() - self.time_start.date()).days
+            num_pledges = p[1]
+            
+            datapoints[day_num] = [day_num, num_pledges]
+        
+        return datapoints
+        
+    def get_amount_pledged_datapoints(self):
+        pledges_per_day = db.session.query(
+            func.date(Pledge.time_created),
+            func.sum(Pledge.amount)
+        ).filter(
+            Project.id==self.id,
+            Project.id==Pledge.project_id
+        ).group_by(
+            func.date(Pledge.time_created)
+        ).all()
+        
+        datapoints = [[i+1,0] for i in range(self.duration + 2)] # [(0,0), (1,0), ..., (30,0)]
+        for p in pledges_per_day:
+            time_pledged = datetime.datetime.strptime(p[0], "%Y-%m-%d")
+            day_num = (time_pledged.date() - self.time_start.date()).days
+            amount = p[1]
+            
+            datapoints[day_num] = [day_num, amount]
+        
+        return datapoints
     
 class Pledge(db.Model):
     id = db.Column(db.Integer, primary_key=True)

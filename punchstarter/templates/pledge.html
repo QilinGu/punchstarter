@@ -11,25 +11,46 @@
             <h1 class="text-center">Plege to {{ project.name }}</h1>
         </div>
     
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class="bg-warning list-unstyled">
+              {% for message in messages %}
+                <li> {{ message }}</li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+    
         <form class="form-horizontal" method="POST" action="{{ url_for('pledge', project_id=project.id) }}">
           <div class="form-group">
-            <label for="name" class="col-sm-2 control-label">Name</label>
-            <div class="col-sm-2">
-              <span class="form-control">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+            <p><strong>Select a reward:</strong></p>
+            {% for reward in project.rewards %}
+              <div class="panel reward-card">
+                <p>
+                  <input type="radio" name="reward_id" value="{{ reward.id }}">
+                  <strong class="text-uppercase">{{ reward.title }}</strong>
+                </p>
+                <p>${{ reward.minimum_pledge_amount }} or more</p>
+                <p>{{ reward.description }}</p>
+              </div>
+            {% endfor %}
+            
+            <div class="panel reward-card">
+              <p>
+                <input type="radio" name="reward_id" value="none">
+                <strong class="text-uppercase">No Reward</strong>
+              </p>
+              <p>Pledge money but choose not to receive a reward.</p>
             </div>
           </div>
           
           <div class="form-group">
-            <label for="amount" class="col-sm-2 control-label">Pledge Amount ($)</label>
-            <div class="col-sm-2">
-              <input type="number" class="form-control" id="amount" name="amount">
-            </div>
+            <label for="amount" class="control-label">Pledge Amount ($)</label>
+            <p><input type="number" class="form-control" id="amount" name="amount" style="width: 200px;"></p>
           </div>
           
           <div class="form-group">
-            <div class="col-sm-offset-2 col-sm-10">
-              <button type="submit" class="btn btn-punchstarter">Submit</button>
-            </div>
+            <button type="submit" class="btn btn-punchstarter">Proceed to Payment</button>
           </div>
         </form>
             

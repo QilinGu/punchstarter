@@ -1,6 +1,6 @@
 import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from flask import Flask, render_template, request, url_for, redirect, abort
+from flask import Flask, render_template, request, url_for, redirect, abort, flash, session
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager, Server
@@ -28,6 +28,10 @@ user_datastore = SQLAlchemyUserDatastore(db, Member, Role)
 security = Security(app, user_datastore, register_form=ExtendedRegisterForm)
 
 mail = Mail(app)
+
+# Setup Stripe
+import stripe
+stripe.api_key = app.config["STRIPE_API_KEY"]
 
 manager.add_command("runserver", Server(
     use_debugger = True,
@@ -122,6 +126,7 @@ def create_rewards(project_id):
         return redirect(url_for('project_detail', project_id=project.id))
     
 @app.route("/projects/<int:project_id>/pledge/", methods=["GET", "POST"])
+@login_required
 def pledge(project_id):
     project = db.session.query(Project).get(project_id)
     if project is None:
@@ -131,8 +136,71 @@ def pledge(project_id):
     elif request.method == "POST":
         # Handle the form submission
         
+        amount = int(request.form.get("amount") or 0)
+        reward_id = request.form.get("reward_id")
+        
+        if reward_id == "none":
+            reward_id = None
+        else:
+            # Valdations
+            
+            reward_query = db.session.query(Reward).filter(Reward.project_id == project.id, Reward.id == reward_id)
+            if reward_query.count() == 0:
+                flash("Please choose a pledge reward.")
+                return redirect(url_for('pledge', project_id=project.id))
+            reward = reward_query.one()
+            
+            if amount < reward.minimum_pledge_amount:
+                flash("You must pledge at least $%s for that reward." % reward.minimum_pledge_amount)
+                return redirect(url_for('pledge', project_id=project.id))
+            
+            if amount < 1:
+                flash("You must pledge at least $1.")
+        
+        # Set session variables
+        session['pledge_reward_id'] = reward_id
+        session['pledge_amount'] = amount
+        
+        return redirect(url_for("pledge_confirm", project_id=project.id))
+
+@app.route("/projects/<int:project_id>/pledge/confirm/", methods=["GET", "POST"])
+@login_required
+def pledge_confirm(project_id):
+    project = db.session.query(Project).get(project_id)
+    if project is None:
+        abort(404)
+    
+    if request.method == "GET":
+        reward = None
+        if session['pledge_reward_id'] is not None:
+            reward = db.session.query(Reward).get(session['pledge_reward_id'])
+            
+        return render_template('pledge_confirm.html',
+            project=project,
+            reward=reward,
+            pledge_amount=session['pledge_amount']
+        )
+        
+    elif request.method == "POST":
+        stripe_token = request.form.get("stripe_token")
+        
+        description = "$%s pledge to %s from %s %s." % (
+            session['pledge_amount'],
+            project.name,
+            current_user.first_name,
+            current_user.last_name
+        )
+            
+        stripe.Charge.create(
+            amount=session['pledge_amount'] * 100, # amount in cents
+            currency="usd",
+            source=stripe_token, # obtained with Stripe.js
+            description=description
+        )
+        
         new_pledge = Pledge (
-            amount = request.form.get("amount"),
+            amount = session['pledge_amount'],
+            reward_id = session['pledge_reward_id'],
             time_created = datetime.datetime.now(),
             member_id = current_user.id,
             project_id = project.id
@@ -141,7 +209,19 @@ def pledge(project_id):
         db.session.add(new_pledge)
         db.session.commit()
         
-        return redirect(url_for("project_detail", project_id=project.id))
+        # Unset session variables
+        session['pledge_reward_id'] = None
+        session['pledge_amount'] = None
+        
+        return redirect(url_for('project_detail', project_id=project.id))
+
+@app.route("/projects/<int:project_id>/stats/")
+def stats(project_id):
+    project = db.session.query(Project).get(project_id)
+    if project is None:
+        abort(404)
+    
+    return render_template('stats.html', project=project)
 
 @app.route("/search/")
 def search():
