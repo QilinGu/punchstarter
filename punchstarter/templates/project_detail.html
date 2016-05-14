@@ -27,6 +27,11 @@
             <div class="panel">
                 <p class="text-center">{{ project.short_description }}</p>
                 <img class="img-responsive center-block" src="{{ project.image_path }}" width="680" height="500">
+                {% if project.category %}
+                    <div>
+                        <i class="glyphicon glyphicon-tages"></i><a href="#">{{ project.category.name }}</a>
+                    </div>
+                {% endif %}
             </div>
             
             <div class="panel text-center">

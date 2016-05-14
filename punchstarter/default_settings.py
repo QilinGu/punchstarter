@@ -10,6 +10,7 @@ CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET", "AkUW2f04FrIMpDK
 STRIPE_API_KEY = os.environ.get("STRIPE_API_KEY", "sk_test_LdxEyCqpQ3aXpuITkNSGVyoS")
 STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY", "pk_test_5qlf7YO7hz4RAC4pewtx0qh8")
 MAIL_DEBUG = os.environ.get('MAIL_DEBUG', True)
+MIXPANEL_TOKEN = os.environ.get('MIXPANEL_TOKEN', "4955f23bf9a3a04fe75671ce614726ed")
 
 # For Registration and login after installing Flask-Security
 SECURITY_REGISTERABLE = True

@@ -5,12 +5,26 @@
     Crowdfunding Made Simple
   {% endblock %}
   
-  {% block content %}
-    <!-- Main jumbotron for a primary marketing message or call to action -->
-    <div class="jumbotron">
-      <h1>Crowdfunding Made Simple</h1>
-      <p>Punchstarter is a simple crowdfunding platform to help make dreams come true!</p>
+  {% block header %}
+  <header>
+    <div class="header-content">
+      <div class="header-content-inner">
+        <h1>Crowdfunding Made Simple</h1>
+        
+        <hr class="header-separator">
+        <h2>Punchstarter is a simple crowdfunding platform to help make dreams come true!</h2>
+        
+        {% if current_user.is_authenticated %}
+          <a href="{{ url_for('create') }}" class="btn btn-lg btn-punchstarter">Create a Project</a>
+        {% else %}
+          <a href="{{ url_for_security('register') }}" class="btn btn-lg btn-punchstarter">Sign Up Now</a>
+        {% endif %}
+      </div>
     </div>
+  </header>
+  {% endblock header %}
+  
+  {% block content %}
     
     <h2>New Projects</h2>
     

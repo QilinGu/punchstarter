@@ -2,9 +2,10 @@ import os, sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from flask import Flask, render_template, request, url_for, redirect, abort, flash, session
 from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.exc import NoResultFound
 from flask.ext.migrate import Migrate, MigrateCommand
 from flask.ext.script import Manager, Server
-from flask.ext.security import Security, SQLAlchemyUserDatastore, login_required, current_user
+from flask.ext.security import Security, SQLAlchemyUserDatastore, login_required, current_user, user_registered
 from flask_mail import Mail
 import datetime
 import cloudinary.uploader
@@ -32,6 +33,24 @@ mail = Mail(app)
 # Setup Stripe
 import stripe
 stripe.api_key = app.config["STRIPE_API_KEY"]
+
+# Setup MixPanel
+from mixpanel import Mixpanel
+mp = Mixpanel(app.config["MIXPANEL_TOKEN"])
+
+def mixpanel_register_new_user(sender, user, confirm_token, **extra):
+    mp.people_set(user.id, {
+        '$first_name': user.first_name,
+        '$last_name': user.last_name,
+        '$email': user.email
+    })
+
+user_registered.connect(mixpanel_register_new_user, app)
+
+# @app.context_processor
+# def navbar_context_processor():
+#     categories = db.session.query(Category).all()
+#     return dict(categories=categories)
 
 manager.add_command("runserver", Server(
     use_debugger = True,
@@ -71,6 +90,7 @@ def create():
         
         new_project = Project(
             member_id = current_user.id,
+            # category_id = request.form.get("category_id"),
             name = request.form.get("project_name"),
             short_description = request.form.get("short_description"),
             long_description = request.form.get("long_description"),
@@ -209,6 +229,8 @@ def pledge_confirm(project_id):
         db.session.add(new_pledge)
         db.session.commit()
         
+        mp.track(current_user.id, 'Made Pledge', {'Amount': session['pledge_amount']})
+        
         # Unset session variables
         session['pledge_reward_id'] = None
         session['pledge_amount'] = None
@@ -224,15 +246,32 @@ def stats(project_id):
     return render_template('stats.html', project=project)
 
 @app.route("/search/")
-def search():
+# @app.route("/search/category/<category_slug>")
+def search(category_slug=None):
     query = request.args.get("q") or ""
     projects = db.session.query(Project).filter(
         Project.name.ilike('%'+query+'%') |
         Project.short_description.ilike('%'+query+'%') |
         Project.long_description.ilike('%'+query+'%')
-    ).all()
+    )
+    
+    # if category_slug:
+        # projects = projects.filter(Category.id == Project.category_id).filter(Category.slug==category_slug)
+    
+    projects = projects.all()
     
     project_count = len(projects)
+    
+    # Set Query Text
+    if category_slug:
+        try:
+            category = db.session.query(Category).filter_by(slug=category_slug).one()
+            query_text = category.name
+        except NoResultFound:
+            query_text = category_slug
+    
+    else:
+        query_text = query if query !="" else "all projects"
     
     return render_template('search.html',
         query_text=query,

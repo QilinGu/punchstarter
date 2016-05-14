@@ -29,6 +29,7 @@ class Role(db.Model, RoleMixin):
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     member_id = db.Column(db.Integer, db.ForeignKey('member.id'), nullable=False)
+    # category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=True)
     name = db.Column(db.String(100))
     short_description = db.Column(db.Text)
     long_description = db.Column(db.Text)
@@ -112,6 +113,12 @@ class Project(db.Model):
             datapoints[day_num] = [day_num, amount]
         
         return datapoints
+
+# class Category(db.Model):
+#     # id = db.Column(db.Integer, primary_key=True)
+#     # name = db.Column(db.String(64), nullable=False)
+#     # slug = db.Column(db.String(64), nullable=False)
+#     # project = db.relationship('Project', backref='category', lazy="dynamic", foreign_keys='Project.category_id')
     
 class Pledge(db.Model):
     id = db.Column(db.Integer, primary_key=True)

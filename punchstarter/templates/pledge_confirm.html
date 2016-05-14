@@ -54,6 +54,7 @@
               description: 'Pledge to {{ project.name }}',
               amount: {{ pledge_amount }} * 100 // amount variable is in cents, so have to multiply by 100; if user enter $10, amount is .10, so multiply by 100 to get 10
             });
+            mixpanel.track("Opened Payment Window");
             e.preventDefault();
           });
         
